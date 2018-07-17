@@ -1,0 +1,7 @@
+{
+    "project": "myProject",
+    "user_name": "myName",
+    "zone": "us-central1-f",
+    "cred_name": "google_servise_account.json",
+    "instances_limit_count": "3"
+}
