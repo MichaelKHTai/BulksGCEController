@@ -46,6 +46,8 @@ class ceclient():
                 request = obj.list_next(previous_request=request, previous_response=response)
         return items
 
+    
+
     def create_instances_from_snapshot(self, snapshot, limit_count = instances_limit_count):
         
         request = service.snapshots().get(project=project, snapshot=snapshot)
@@ -152,12 +154,31 @@ class ceclient():
         response = request.execute()
         print "Request Send, starting instance: " + name
         return response
-    def enable_instances(self):
+    def enable_instances(self, check_availability=True):
         all_instances = self.search_any('instances', filter="labels.type=" + self.working_group_label)
         all_instances_name = [x['name'] for x in all_instances]
         for instance in all_instances_name:
             self.enable_instance(instance)
         
+        def check_instances_available():
+            not_ready = True
+            i = 0
+            while not_ready and i < 10:
+                print "Wait 10s for instances to ready."
+                time.sleep(10)
+                instances_list = self.search_any('instances', filter="labels.type=" + self.working_group_label)
+                not_ready = False
+                for instance in instances_list:
+                    if instance['status'] != 'RUNNING':
+                        print "At least instance -- " + instance['name'] + " is still not ready."
+                        not_ready = True
+                        break
+
+                if i == 9:
+                    print "Instances is still not available, please check your Google Cloud Platform Console."
+                i += 1
+        if check_availability:
+            check_instances_available()
 
     def upload_file(self, projectname):
         var = raw_input("Upload file with name: " + projectname + " will remove all file and directory with same name in the instance. Are you sure? (y/n)")
@@ -182,10 +203,10 @@ class ceclient():
                 temp_file_path = '/home/' + user_name + '/'
 
                 command_arr = []
-                command_arr.append('call gcloud compute ssh ' + temp_instance + ' --zone ' + zone + ' --command "cd ' + temp_file_path + '; rm -rf ' + temp_file_path + projectname.split('.')[0] + '; rm -f ' + temp_file_path + projectname.split('.')[0] + '*"\n')
-                command_arr.append('call gcloud compute scp "' + fullpath_projectname + '" ' + instance + ':' + temp_file_path + '\n')
+                command_arr.append('call gcloud compute ssh ' + temp_instance + ' --zone ' + zone + ' --command "cd ' + temp_file_path + '; sudo rm -rf ' + temp_file_path + projectname.split('.')[0] + '; sudo rm -f ' + temp_file_path + projectname.split('.')[0] + '*"\n')
+                command_arr.append('call gcloud compute scp "' + fullpath_projectname + '" ' + temp_instance + ':' + temp_file_path + '\n')
                 if is_zip:
-                    command_arr.append('call gcloud compute ssh ' + temp_instance + ' --zone ' + zone + ' ' + ' --command "cd ' + temp_file_path + '; unzip ' + temp_file_path + projectname + '"' + '\n')
+                    command_arr.append('call gcloud compute ssh ' + temp_instance + ' --zone ' + zone + ' ' + ' --command "cd ' + temp_file_path + '; sudo unzip ' + temp_file_path + projectname + '"' + '\n')
                 with open(os.path.join(__location__, 'bat/' + temp_command + '.bat'), 'w') as bat:
                     bat.writelines(command_arr)
                 subprocess.Popen(os.path.join(__location__, 'bat/' + temp_command + '.bat'), shell=True)
@@ -198,6 +219,7 @@ class ceclient():
             is_python = False
 
         i = 0
+        processes = []
         for instance in all_instances_name:
             
             temp_command = 'gcloud_command_' + str(i)
@@ -208,11 +230,14 @@ class ceclient():
             ssh_call = 'call gcloud compute ssh ' + temp_instance + ' --zone ' + zone + ' --command "cd ' + temp_file_path + '; '
             command_arr = []
             #enable execution on .exe
-            command_arr.append(ssh_call + 'chmod +x ' + temp_file_path + projectname + '/*.exe"' + '\n')
-            command_arr.append(ssh_call + ('python ' if is_python else '') + temp_file_path + projectname + '/' + starter + ' ' + args + '"' + '\n')
+            command_arr.append(ssh_call + 'sudo chmod +x ' + temp_file_path + projectname + '/*.exe"' + '\n')
+            command_arr.append(ssh_call + ('sudo python ' if is_python else '') + temp_file_path + projectname + '/' + starter + ' ' + args + '"' + '\n')
             with open(os.path.join(__location__, 'bat/' + temp_command + '.bat'), 'w') as bat:
                 bat.writelines(command_arr)
-            subprocess.Popen(os.path.join(__location__, 'bat/' + temp_command + '.bat'), shell=True)
+            processes.append(subprocess.Popen(os.path.join(__location__, 'bat/' + temp_command + '.bat'), shell=True))
+        
+        for p in processes:
+            p.wait() 
 
     def __init__(self, label):
         self.working_group_label = label
