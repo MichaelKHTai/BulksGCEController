@@ -264,7 +264,7 @@ if __name__ == "__main__":
     label = args.label
     worker = ceclient(label)
     if args.create:
-        if len(args.create) > 1:
+        if args.create > 1:
             worker.create_instances_from_snapshot(args.create[0] , int(args.create[1]))
         else:
             worker.create_instances_from_snapshot(args.create[0])
