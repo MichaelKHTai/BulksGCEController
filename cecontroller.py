@@ -209,7 +209,8 @@ class ceclient():
                     command_arr.append('call gcloud compute ssh ' + temp_instance + ' --zone ' + zone + ' ' + ' --command "cd ' + temp_file_path + '; sudo unzip ' + temp_file_path + projectname + '"' + '\n')
                 with open(os.path.join(__location__, 'bat/' + temp_command + '.bat'), 'w') as bat:
                     bat.writelines(command_arr)
-                subprocess.Popen(os.path.join(__location__, 'bat/' + temp_command + '.bat'), shell=True)
+                proc = subprocess.Popen(os.path.join(__location__, 'bat/' + temp_command + '.bat'), shell=True)
+                proc.communicate(input='y')
 
     def run_program(self, projectname, starter, args = ''):
         all_instances = self.search_any('instances', filter="labels.type=" + self.working_group_label)
