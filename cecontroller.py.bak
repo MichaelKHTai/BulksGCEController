@@ -17,7 +17,7 @@ config = json.load(open(os.path.join(__location__, 'config.json')))
 cred_name = config['cred_name']
 service_key = open(os.path.join(__location__, cred_name))
 info = json.load(service_key)
-credentials = service_account.Credentials.from_service_account_info(info)
+credentials = credentials = service_account.Credentials.from_service_account_info(info)
 
 project = config['project']
 service = discovery.build('compute', 'v1', credentials=credentials)
@@ -80,16 +80,15 @@ class ceclient():
 
                 not_ready = True
                 while not_ready:
+                    print "Wait 10s for disk to ready."
+                    time.sleep(10)
                     disk_list = self.search_any('disks', filter="labels.type=" + self.working_group_label)
                     not_ready = False
                     for disk in disk_list:
                         if disk['status'] != 'READY':
-                            print("At least disk -- " + disk['name'] + " is still not ready.")
+                            print "At least disk -- " + disk['name'] + " is still not ready."
                             not_ready = True
                             break
-                    if not_ready:
-                        print("Wait 10s for disk to ready.")
-                        time.sleep(10)
                             
 
                 for i in range(0, engine_needed):
@@ -121,7 +120,7 @@ class ceclient():
     def delete_instance(self, name):
         request = service.instances().delete(project=project, zone=zone, instance=name)
         response = request.execute()
-        print("Deleting instances: " + name)
+        print "Deleting instances: " + name
         return response
     def delete_instances(self, remove_all=False):
         filter = "(labels.type=" + self.working_group_label +") AND (labels.id!=0)"
@@ -131,9 +130,9 @@ class ceclient():
         all_instances_name = [x['name'] for x in all_instances]
 
         if remove_all:
-            print("Request Send, deleting all in instances group: " + self.working_group_label)
+            print "Request Send, deleting all in instances group: " + self.working_group_label
         else:
-            print("Request Send, deleting copies in instances group: " + self.working_group_label)
+            print "Request Send, deleting copies in instances group: " + self.working_group_label
         for instance in all_instances_name:
             self.delete_instance(instance)
         
@@ -141,7 +140,7 @@ class ceclient():
     def disable_instance(self, name):
         request = service.instances().stop(project=project, zone=zone, instance=name)
         response = request.execute()
-        print("Request Send, stopping instance: " + name)
+        print "Request Send, stopping instance: " + name
         return response
     def disable_instances(self):
         all_instances = self.search_any('instances', filter="labels.type=" + self.working_group_label)
@@ -153,7 +152,7 @@ class ceclient():
     def enable_instance(self, name):
         request = service.instances().start(project=project, zone=zone, instance=name)
         response = request.execute()
-        print("Request Send, starting instance: " + name)
+        print "Request Send, starting instance: " + name
         return response
     def enable_instances(self, check_availability=True):
         all_instances = self.search_any('instances', filter="labels.type=" + self.working_group_label)
@@ -165,18 +164,18 @@ class ceclient():
             not_ready = True
             i = 0
             while not_ready and i < 10:
-                print("Wait 10s for instances to ready.")
+                print "Wait 10s for instances to ready."
                 time.sleep(10)
                 instances_list = self.search_any('instances', filter="labels.type=" + self.working_group_label)
                 not_ready = False
                 for instance in instances_list:
                     if instance['status'] != 'RUNNING':
-                        print("At least instance -- " + instance['name'] + " is still not ready.")
+                        print "At least instance -- " + instance['name'] + " is still not ready."
                         not_ready = True
                         break
 
                 if i == 9:
-                    print("Instances is still not available, please check your Google Cloud Platform Console.")
+                    print "Instances is still not available, please check your Google Cloud Platform Console."
                 i += 1
         if check_availability:
             check_instances_available()
@@ -184,7 +183,7 @@ class ceclient():
     def upload_file(self, projectname):
         var = raw_input("Upload file with name: " + projectname + " will remove all file and directory with same name in the instance. Are you sure? (y/n)")
         if var.lower().strip() != "y":
-            print("Abort uploading.")
+            print "Abort uploading."
             return
         is_zip = False
         if projectname.split('.')[1] == "zip":
@@ -204,10 +203,10 @@ class ceclient():
                 temp_file_path = '/home/' + user_name + '/'
 
                 command_arr = []
-                command_arr.append('call gcloud compute ssh ' + temp_instance + ' --zone ' + zone + ' --command "cd ' + temp_file_path + '; sudo rm -rf ' + temp_file_path + projectname.split('.')[0] + '; sudo rm -f ' + temp_file_path + projectname.split('.')[0] + '*" -q \n')
-                command_arr.append('call gcloud compute scp "' + fullpath_projectname + '" ' + temp_instance + ':' + temp_file_path + ' -q \n')
+                command_arr.append('call gcloud compute ssh ' + temp_instance + ' --zone ' + zone + ' --command "cd ' + temp_file_path + '; sudo rm -rf ' + temp_file_path + projectname.split('.')[0] + '; sudo rm -f ' + temp_file_path + projectname.split('.')[0] + '*"\n')
+                command_arr.append('call gcloud compute scp "' + fullpath_projectname + '" ' + temp_instance + ':' + temp_file_path + '\n')
                 if is_zip:
-                    command_arr.append('call gcloud compute ssh ' + temp_instance + ' --zone ' + zone + ' ' + ' --command "cd ' + temp_file_path + '; sudo unzip ' + temp_file_path + projectname + '" -q \n')
+                    command_arr.append('call gcloud compute ssh ' + temp_instance + ' --zone ' + zone + ' ' + ' --command "cd ' + temp_file_path + '; sudo unzip ' + temp_file_path + projectname + '"' + '\n')
                 with open(os.path.join(__location__, 'bat/' + temp_command + '.bat'), 'w') as bat:
                     bat.writelines(command_arr)
                 subprocess.Popen(os.path.join(__location__, 'bat/' + temp_command + '.bat'), shell=True)
@@ -238,11 +237,7 @@ class ceclient():
             processes.append(subprocess.Popen(os.path.join(__location__, 'bat/' + temp_command + '.bat'), shell=True))
         
         for p in processes:
-            p.wait()
-
-        #Kill the processes after finished
-        for p in processes:
-            p.kill()
+            p.wait() 
 
     def __init__(self, label):
         self.working_group_label = label
@@ -269,7 +264,7 @@ if __name__ == "__main__":
     label = args.label
     worker = ceclient(label)
     if args.create:
-        if len(args.create) > 1:
+        if args.create > 1:
             worker.create_instances_from_snapshot(args.create[0] , int(args.create[1]))
         else:
             worker.create_instances_from_snapshot(args.create[0])
@@ -291,7 +286,7 @@ if __name__ == "__main__":
         elif len(args.run) > 1:
             worker.run_program(args.run[0], args.run[1])
         else:
-            print('At least 2 args needed. 1. Project file contains the executable; 2. Executable name (.py/.exe); 3+. Args for executable')
+            print 'At least 2 args needed. 1. Project file contains the executable; 2. Executable name (.py/.exe); 3+. Args for executable'
 
 
     sys.exit(0)
