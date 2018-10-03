@@ -26,7 +26,8 @@ Download the cecontroller.py
 cmd> python cecontroller.py {project_name}
 ```
 
-Options
+#### Options
+
 ```
 '--create','-c', help='Create Instances with snapshot name create, number of instances need can be optional added in 2nd arg', nargs='+')
 '--on','-n', action="store_true", help='Turn on all Instances')
@@ -36,20 +37,25 @@ Options
 '--run','-r', help='At least 2 args needed. 1. Project file contains the executable; 2. Executable name (.py/.exe); 3+. Args for executable', nargs='+')
 ```
 
-Code Snippet Options
+#### Code Snippet Options
+
 **cecontroller.ceclient(projectname)**
+
     Create the class for controlling compute engine instances
     --projectname: value of instance tag "type" (please be remember adding the type tag of source instance before creating copies)
 
 **cecontroller.ceclient.enable_instances()**
+
     *Same as --on*
     Start all compute engine instances.
 
 **cecontroller.ceclient.disable_instances()**
+
     *Same as --off*
     Close all compute engine instances.
 
 **cecontroller.ceclient.create_instances_from_snapshot(snapshot, limit_count = config.instances_limit_count)**
+
     *Same as --create*
     Create all compute engine instances copy from source instance's snapshot. 
     **Notice!!** Remember to create a "type" tag for the source instances (not the snapshot).
@@ -57,16 +63,19 @@ Code Snippet Options
     --limit_count(int): number of copied instances will be created
 
 **cecontroller.ceclient.delete_instances(remove_all=False)**
+
     *Same as --delete*
     Delete all compute engine instances.
     --remove_all(bool): True if all instances including the copying source instance should be deleted
 
 **cecontroller.ceclient.upload_file(workerfilename)**
+
     *Same as --upload*
     Upload target file to all compute engine instances.
     --workerfilename(string): the file name (.zip/.py/.exe) wanted to be uploaded, for example "FBPage_NoAPI.zip"
 
 **cecontroller.ceclient.run_program(workerfilename, starter, args = '')**
+
     *Same as --run*
     Run target file in all compute engine instances.
     --workerfilename(string): the file name (.zip/.py/.exe) wanted to be uploaded, for example "FBPage_NoAPI.zip"
